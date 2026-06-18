@@ -1,0 +1,54 @@
+---
+title: "Analysis of films through the years"
+author: Kyrylo Radchenko
+format: html
+---
+
+## Introduction
+
+Film industry is a very big entity. You can find it in every country in the world, and it will be doing it own stuff there. But one question arises, is there are some correlations or trend that happens in this industry? In this analysis I want to find this out.
+
+In this analysis I will be using data set of all films that were released before 2024. This data set was created by a user Simon Garanin, you can find it on the Kaggle site [here](https://www.kaggle.com/datasets/gsimonx37/letterboxd/data?select=posters.csv). Data set consist of a number of small data sets, that contains information as movie title, rating on the Letterboxd site, length of the movie, genres, movie cast etc.
+
+## Theory
+
+
+
+## Analysis
+
+This data set has over 950000 entries, but not all of them interesting to us, so we need to clean it up a little bit, and load it into our session. There is some TV series, so we filter them by using maximum length of a film as a 5 hours. Also we look only on the films before 2024. As a releases we look only on the USA, because it's the biggest market for films, so it is the best for our analysis.
+
+```{r}
+#| warning: false
+library(dplyr)
+
+movies <- read.csv("movies.csv", fill = TRUE, header = TRUE) |>
+  select(-description, -tagline) |>
+  filter(!is.na(date), !is.na(rating), minute <= 240, date < 2024)
+
+studios <- read.csv("studios.csv", fill = TRUE, header = TRUE)
+
+releases <- read.csv("releases.csv", fill = TRUE, header = TRUE) |>
+  filter(country == "USA") |>
+  filter(type == "Theatrical" | type == "Digital") |>
+  select(-date)|>
+  distinct()|>
+  rename(age_rating = rating)
+
+genres <- read.csv("genres.csv", fill = TRUE, header = TRUE)
+
+directors <- read.csv("crew.csv", fill = TRUE, header = TRUE) |>
+  filter(role == "Director")
+
+```
+
+```{r}
+library(ggplot2)
+movies|>
+  ggplot() + aes(x = date, y = minute) + 
+  geom_boxplot(aes(group = date), outlier.alpha = 0.05, outlier.shape = 1) +
+  theme(axis.text.x = element_text(angle = 90, size = 7)) +
+  scale_x_continuous(breaks = seq(1872, 2024, by = 4), expand = c(0,1))
+```
+
+

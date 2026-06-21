@@ -1,54 +1,330 @@
 ---
-title: "Analysis of films through the years"
+title: "Letterboxd analysis"
 author: Kyrylo Radchenko
 format: html
 ---
 
 ## Introduction
 
-Film industry is a very big entity. You can find it in every country in the world, and it will be doing it own stuff there. But one question arises, is there are some correlations or trend that happens in this industry? In this analysis I want to find this out.
-
-In this analysis I will be using data set of all films that were released before 2024. This data set was created by a user Simon Garanin, you can find it on the Kaggle site [here](https://www.kaggle.com/datasets/gsimonx37/letterboxd/data?select=posters.csv). Data set consist of a number of small data sets, that contains information as movie title, rating on the Letterboxd site, length of the movie, genres, movie cast etc.
+This project is dedicated to analysis of films on the site Letterboxd and users' behaviour when rating films. There were two data sets used ([first](https://www.kaggle.com/datasets/gsimonx37/letterboxd)) and ([second](https://www.kaggle.com/datasets/ky1338/10000-movies-letterboxd-data)). "First" data set consists of multiple data sets, that contains full film information such as title, release year, genres, studios. "Second" data set contains detailed information about user's ratings. The goal of the analysis is to determine trends in film industries, and correlation between users' behaviour and film quality.
 
 ## Theory
 
+Letterboxd is a popular social platform for film enthusiasts, where you can share your opinions or use it as a list of watched films with your ratings. We will be looking at five main components: average rating, amount of film views, the percentage of people who rated/liked the film out of the total number of views, percentage of every possible rating out of total amount of ratings.
 
+A sample of data set is shown in Table 1.
+
+```{r}
+#| echo: FALSE
+#| warning: FALSE
+library(knitr)
+library(dplyr)
+read.csv(file = "Movie_Data_File.csv", header = TRUE) |>
+  select(Film_title, Average_rating, Watches,Likes,R_0.5,R_1,R_1.5,R_2,R_2.5,R_3,R_3.5,R_4,R_4.5,R_5,Total_ratings) |>
+  filter(!is.na(Average_rating)) |>
+  mutate(R_0.5 = R_0.5 / Total_ratings, R_1 = R_1 / Total_ratings, R_1.5 = R_1.5 / Total_ratings, R_2 = R_2 / Total_ratings, 
+         R_2.5 = R_2.5 / Total_ratings, R_3 = R_3 / Total_ratings, R_3.5 = R_3.5 / Total_ratings, R_4 = R_4 / Total_ratings, 
+         R_4.5 = R_4.5 / Total_ratings, R_5 = R_5 / Total_ratings, Likes = Likes / Watches, Total_ratings = Total_ratings / Watches) |> 
+  rename(Title = Film_title, Av_rating = Average_rating, Ratings = Total_ratings) |>
+  top_n(5, wt = Watches) |>
+  kable(align="c", digits = 2)
+
+cat("\n")
+```
+
+We use Spearman's Rank Correlation to measure monotonic relationship between two continuous variables because our monotonic relationship can be non-linear. 
+
+The equation can be written as shown in Equation 1:
+
+$$
+\rho  = 1 - {6\sum{d^2}\over{n(n^2-1)}}
+$$
+Where:
+
+* **ρ**: Spearman's Rank Correlation
+* **d**: difference between ranks of corresponding values
+* **n**: total number of observation    
 
 ## Analysis
 
-This data set has over 950000 entries, but not all of them interesting to us, so we need to clean it up a little bit, and load it into our session. There is some TV series, so we filter them by using maximum length of a film as a 5 hours. Also we look only on the films before 2024. As a releases we look only on the USA, because it's the biggest market for films, so it is the best for our analysis.
+Before the analysis starts, we need to clean our data before loading it into our session, remove incomplete records and calculate further required percentages. There is some TV series, so we filter them by using maximum length of a film as a 4 hours. For the releases we interested in data from USA, because USA is a biggest market for films. 
 
 ```{r}
 #| warning: false
 library(dplyr)
 
-movies <- read.csv("movies.csv", fill = TRUE, header = TRUE) |>
-  select(-description, -tagline) |>
-  filter(!is.na(date), !is.na(rating), minute <= 240, date < 2024)
+movies <- read.csv("movies.csv", header = TRUE) |>
+  filter(!is.na(date), !is.na(rating), minute <= 240)
 
-studios <- read.csv("studios.csv", fill = TRUE, header = TRUE)
+studios <- read.csv("studios.csv", header = TRUE)
 
-releases <- read.csv("releases.csv", fill = TRUE, header = TRUE) |>
+releases <- read.csv("releases.csv", header = TRUE) |>
   filter(country == "USA") |>
   filter(type == "Theatrical" | type == "Digital") |>
   select(-date)|>
   distinct()|>
   rename(age_rating = rating)
 
-genres <- read.csv("genres.csv", fill = TRUE, header = TRUE)
+genres <- read.csv("genres.csv", header = TRUE)
 
-directors <- read.csv("crew.csv", fill = TRUE, header = TRUE) |>
-  filter(role == "Director")
+countries <- read.csv("/home/cyrill/Downloads/R_Project/countries.csv", header = TRUE)
 
+letterboxd <- read.csv(file = "Movie_Data_File.csv", header = TRUE) |>
+  select(Film_title, Average_rating, Watches,Likes,R_0.5,R_1,R_1.5,R_2,R_2.5,R_3,R_3.5,R_4,R_4.5,R_5,Total_ratings, Original_language) |>
+  filter(!is.na(Average_rating)) |>
+  rename(title = Film_title)|>
+  mutate(R_0.5 = R_0.5 / Total_ratings, R_1 = R_1 / Total_ratings, R_1.5 = R_1.5 / Total_ratings, R_2 = R_2 / Total_ratings, 
+         R_2.5 = R_2.5 / Total_ratings, R_3 = R_3 / Total_ratings, R_3.5 = R_3.5 / Total_ratings, R_4 = R_4 / Total_ratings, 
+         R_4.5 = R_4.5 / Total_ratings, R_5 = R_5 / Total_ratings, Likes = Likes / Watches, Total_ratings = Total_ratings / Watches)
+```
+
+Analysis starts with determining of possible trend in length of the films throughout the years. As shown in Figure 1, 
+we can clearly see upward tendency, there is a positive linear trend over time, but because of a slow growth it is a weak trend. As shown in Figure 2, the vast majority of films are approximately of a 100 minute runtime, with a gentler slope on a side of longer films.
+
+```{r}
+#| warning: FALSE
+library(ggplot2)
+movies|>
+  ggplot() + aes(x = date, y = minute) + 
+  geom_boxplot(aes(group = date), outlier.alpha = 0.1, outlier.shape = 1) +
+  labs(
+    title = "Lenght of the movie throughout years",
+    x = "Year",
+    y = "Lenght",
+  ) +
+  geom_smooth(method = "lm", formula = y ~ x, se = FALSE, size = 0.4) +
+  theme(axis.text.x = element_text(angle = 90, size = 7)) +
+  scale_x_continuous(breaks = seq(1904, 2024, by = 4), expand = c(0,1))
 ```
 
 ```{r}
 library(ggplot2)
 movies|>
-  ggplot() + aes(x = date, y = minute) + 
-  geom_boxplot(aes(group = date), outlier.alpha = 0.05, outlier.shape = 1) +
-  theme(axis.text.x = element_text(angle = 90, size = 7)) +
-  scale_x_continuous(breaks = seq(1872, 2024, by = 4), expand = c(0,1))
+  ggplot() + 
+  aes(x = minute) + 
+  geom_histogram(binwidth = 4, color = "white") +
+  labs(
+    x = "",
+    y = "Count"
+  )
 ```
 
+Next step is to analyse amount of film released each year. Figure 3 shows sharp decline of films after a year 2020. It corresponds with a start of a COVID-19 pandemic, that forced cinemas to close on the period of pandemic. As can be seen, this has led to a fall in the number of films released each year, although not to zero.
+
+```{r}
+ggplot(movies) + 
+  aes(x = date) + 
+  geom_bar(color = "white") +
+  theme(axis.text.x = element_text(angle = 90, size = 7)) +
+  scale_x_continuous(breaks = seq(1904, 2024, by = 4), expand = c(0,1))
+```
+
+As shown in Figure 4, at the start of pandemic in the 2020 as a result of closed cinemas a lot of films were released in digital format. 2013 was a year when Netflix, the biggest streaming service, started to make exclusive shows, that were released only digitally. After 2013 we can see a rapid growth of digital only releases that corresponded with a decline of theatrical only releases. 
+
+```{r}
+
+only_digital_releases <- inner_join(movies, releases, by = "id") |>
+  group_by(name, date) |>
+  filter(date >= 2006)|>
+  filter(any(type == "Digital") && all(type != "Theatrical")) |>
+  ungroup()|>
+  group_by(date)|>
+  summarise(digital = n())
+
+all_movies <- movies|>
+  filter(date >= 2006)|>
+  group_by(date) |>
+  summarize(all = n())
+
+only_theatrical_releases <- inner_join(only_digital_releases, all_movies, by = "date") |>
+  mutate(theatrical = all - digital) |>
+  select(date, theatrical)
+
+
+ggplot() + geom_line(data = only_digital_releases, aes(x = date, y = digital, color = "a")) +
+  geom_line(data = only_theatrical_releases, aes(x = date, y = theatrical, color = "b")) +
+  geom_line(data = all_movies, aes(x = date, y = all, color = "c")) +
+  scale_color_manual(
+    values = c("red", "yellow", "blue"),
+    labels = c("Digital only movies", "Theatrical", "All movies")
+    ) +
+  labs(
+    title = "Growth of digital only movies",
+    x = "Year",
+    y = "Number of films",
+  ) +
+  scale_x_continuous(breaks = seq(2006, 2024, by = 2)) +
+  geom_vline(xintercept=2013, linetype='dashed', color='blue') +
+  theme() 
+```
+
+The next part of the analysis focuses on genre popularity in different circumstances. Figure 5 shows popularity of genres in all films, digital and theatrical. It can be determined that top 4 genres are Drama, Comedy, Action and Thriller. Figure 6 shows genre popularity in digital only movies. As can be seen, top 3 is the same, but forth place is taken by a Music.
+
+```{r}
+#| warning: false
+library(plotly)
+
+inner_join(movies, genres, by = "id") |>
+  filter(date >= 2012)|>
+  group_by(date, genre)|>
+  summarise(n = n()) |>
+  ggplot() + 
+  aes(x = date, y = n, group = genre) + 
+  geom_line(aes(color = genre)) + 
+  geom_point(size = 1, aes(color = genre)) +
+  scale_x_continuous(breaks = seq(2012, 2024, by = 2)) +
+  labs(
+    title = "Growth of the genres after 2012",
+    x = "Year",
+    y = "Number of films",
+    color = "Genre"
+  )
+
+```
+
+```{r}
+#| warning: false
+
+movies_releases_grouped <- inner_join(movies, releases, by = "id") |>
+  group_by(name, date) |>
+  filter(date > 2012)|>
+  filter(any(type == "Digital") && all(type != "Theatrical")) |>
+  ungroup()|>
+  inner_join(genres, by = "id")|>
+  group_by(date, genre)|>
+  summarise(n = n())
+
+ggplot(movies_releases_grouped) + 
+  aes(x = date, y = n, group = genre) + 
+  geom_line(aes(color = genre)) + 
+  geom_point(size = 1, aes(color = genre))
+
+```
+
+Then we analyse the popularity of a particular film genre produced by different countries. In this data set there is no information about every country, but only the majority of them. As shown in Figure 7, the most popular genre is still a Drama, but a lot of countries have different most produced genre.
+
+```{r}
+#| warning: false
+library(maps)
+library(countrycode)
+
+dat_for_map <- inner_join(genres, countries, by = "id") |>
+  mutate(country = countrycode::countrycode(
+    sourcevar = country, origin = 'country.name', destination = 'country.name')
+  ) |>
+  group_by(genre, country)|>
+  summarise(n = n())|>
+  ungroup()|>
+  group_by(country)|>
+  slice(which.max(n))
+dat_world_map <- map_data("world") |> 
+  mutate(region = countrycode::countrycode(
+    sourcevar = region, origin = 'country.name', destination = 'country.name')
+  )
+p <- dplyr::full_join(x = dat_for_map, y = dat_world_map, 
+                      by = c("country" = "region"),
+                      multiple = "all", relationship = "many-to-many") |> 
+  ggplot(mapping = aes(x = long, y = lat, group = group)) +
+  geom_polygon(mapping = aes(fill = genre)) +  
+  coord_fixed(ratio = 1.3) +
+  labs(fill = "Genre") + 
+  theme_void()
+ggplotly(p)
+```
+
+Also an important parameter is a original language of a film. On Figure 8 information is shown about top 6 languages and languages that are lower than top 6 is collected in group Other. It is clear that English is a dominant language for films, but also that 1/6 of all languages is not English.
+
+```{r}
+#| warning: false
+letterboxd |>
+  select(Original_language) |>
+  group_by(Original_language) |>
+  count(Original_language)|>
+  arrange(desc(n))|>
+  group_by(Original_language = factor(c(Original_language[1:6], rep("Other", n() - 6)),
+                            levels = c(Original_language[1:6], "Other"))) |>
+  tally(n) |>
+  ggplot(aes(x = "", y = n, fill = Original_language)) +
+  geom_col() +
+  coord_polar("y") +
+  labs(title = "Graph") +
+  theme_void()
+```
+
+Next step in analysis is finding ten studious with most released movies, and determining is there are any trend with ratings of the movies throughout years. As shown on Figure 9 all top ten studious have negative linear trend over time. So mean rating of films from big studious is decreasing more and more.
+
+```{r}
+
+top10studios <- studios|>
+  group_by(studio)|>
+  summarise(n_movies = n())|>
+  arrange(desc(n_movies))|>
+  slice_head(n = 10)
+
+movies_studios <- inner_join(movies, studios, by = "id") |>
+  filter(studio %in% pull(top10studios, studio)) |>
+  group_by(date, studio)|>
+  summarise(mean_rating = mean(rating))
+
+
+ggplot(movies_studios) + aes(x = date, y = mean_rating) + geom_line(aes(color = studio)) + facet_wrap(vars(studio), nrow = 5) + 
+  geom_smooth(method = "lm", linewidth = 0.5, formula = y ~ x) +
+  guides(color = "none")
+```
+
+
+In the last part of analysis, correlation between likes(or total rating) and percentage of each rating was determined by using Spearman's Rank Correlation. In Table 2 and Figure 10, it can be seen that correlation between percentage of each rating and percentage of likes is pretty strong. It can be interpreted that if movie is good, than it will lead to more likes, and vice versa. And conversely, in Table 2 and Figure 11 it can be seen that total rating doesn't have strong relationship with percentage of each rating.  
+
+```{r}
+library(knitr)
+c1 <- cor(letterboxd[,5:14], letterboxd[,4], method = "spearman")
+c2 <- cor(letterboxd[,5:14], letterboxd[,15], method = "spearman")
+rownames(c1) <- NULL
+rownames(c2) <- NULL
+
+table <- data.frame(
+  Rating = c("R_0.5","R_1","R_1.5","R_2","R_2.5","R_3","R_3.5","R_4","R_4.5","R_5"),
+  Likes = c1[,1],
+  Total_Rating = c2[,1])
+
+kable(table, align="l")
+
+```
+
+
+
+```{r}
+#| warning: false
+library(patchwork)
+
+
+plots <- list() 
+counter <-  0 
+
+for (i in c("R_0.5","R_1","R_1.5","R_2","R_2.5","R_3","R_3.5","R_4","R_4.5","R_5"))
+{
+  counter <- counter + 1
+  plots[[counter]] <- ggplot(letterboxd) + aes(Likes, .data[[i]]) + geom_point(alpha = 0.1)
+}
+wrap_plots(plots, ncol = 3)
+
+```
+```{r}
+#| warning: false
+library(patchwork)
+
+
+plots <- list() 
+counter <-  0 
+
+for (i in c("R_0.5","R_1","R_1.5","R_2","R_2.5","R_3","R_3.5","R_4","R_4.5","R_5"))
+{
+  counter <- counter + 1
+  plots[[counter]] <- ggplot(letterboxd) + aes(Total_ratings, .data[[i]]) + geom_point(alpha = 0.1)
+}
+wrap_plots(plots, ncol = 3)
+
+```
+
+## Conclusion
 

@@ -185,7 +185,8 @@ ggplot() + geom_line(data = only_digital_releases,
     color = "Type of release"
   ) +
   scale_x_continuous(breaks = seq(2008, 2024, by = 2)) +
-  geom_vline(xintercept=2013, linetype='dashed', color='blue')
+  geom_vline(xintercept=2013, linetype='dashed', color='green') +
+  annotate("text", x = 2012, y = 300, label = "Netflix first exclusive release", color = "darkgreen")
 ```
 
 The next part of the analysis focuses on genre popularity in different circumstances. @fig-figure5 shows popularity of genres in all films, digital and theatrical. It can be determined that top 4 genres are Drama, Comedy, Action and Thriller. @fig-figure6 shows genre popularity in digital only movies. As can be seen, top 3 is the same, but forth place is taken by a Music.

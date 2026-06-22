@@ -73,11 +73,11 @@ Where:
 * Determined positive linear trend in length of films
 * Determined the most popular range of length
 * Found correlation between decrease in number of films and start of COVID-19 pandemic
-* Growth of a digital only releases as pandemic started
+* Growth of a digital only releases as pandemic started in 2020
 * Determined top 4 genres over all and top 4 genres in only digital releases
 * Showed map of most produced genres throughout the world
 * Proportion of film languages
-* Determined negative linear trend in average rating of big studiou's films
+* Determined negative linear trend in average rating of big studious films
 * Determined correlation between proportion of likes and proportion of each rating
 
 
@@ -107,7 +107,8 @@ There we can see that the most popular range of film's length is from 80 minutes
 <div>
 ![](Letterboxd_Analysis_files/figure-html/fig-figure4-1.png){width=100%}
 </div>
-Something something
+
+In first figure there is a sharp decline of films after 2020, and it coincidence with a start of COVID-19 pandemic, when all cinemas were closed on the duration of pandemic. That led to increase in digital only releases that we can see in second figure.
 
 ### Correlation
 
@@ -115,9 +116,13 @@ Something something
 ![](Letterboxd_Analysis_files/figure-html/fig-figure10-1.png){width=100%}
 </div>
 
+This figure show us a pretty strong correlation between percentage of each rating and percentage of likes on a film. 
+
 <div>
 ![](Letterboxd_Analysis_files/figure-html/fig-figure11-1.png){width=100%}
 </div>
+
+While this figure show us an opposite, a very weak correlation between percentage of each rating and percentage of total ratings.
 
 ### Correlation table
 
@@ -139,10 +144,12 @@ kable(table, align="l")
 ```
 </div>
 
+This table let us determine a numerical values of correlations that we saw in previous figures. Values were calculated by Spearman's Rank Correlation because this correlations aren't linear. 
+
 ## Column 3  {data-width=350, .tabset}
 
 ### Genres Popularity
-
+<div>
 ```{r}
 library(plotly)
 p1 <- inner_join(movies, genres, by = "id") |>
@@ -164,9 +171,12 @@ p1 <- inner_join(movies, genres, by = "id") |>
 ggplotly(p1) |>
   layout(xaxis = list(autorange = TRUE), yaxis = list(autorange = TRUE))
 ```
+</div>
+
+Popularity of each genres throughout the years. Top 4 of them are Drama, Comedy, Action and Thriller.
 
 ### Genres Map
-
+<div>
 ```{r}
 library(maps)
 library(countrycode)
@@ -195,6 +205,9 @@ p <- full_join(x = dat_for_map, y = dat_world_map,
 ggplotly(p) |>
   layout(xaxis = list(autorange = TRUE), yaxis = list(autorange = TRUE))
 ```
+</div>
+
+This map shows the popularity of genres in different countries. Still a lot of countries has Drama as their top 1, such as in popularity of genres over all.
 
 ### Film Languages
 
@@ -202,8 +215,12 @@ ggplotly(p) |>
 ![](Letterboxd_Analysis_files/figure-html/fig-figure8-1.png){width=100%}
 </div>
 
+This figure shows a proportion of languages to each other. The winner there is obviously English, but still, 1/6 of all movies are made in other languages 
+
 ### Biggest Studious
 
 <div>
 ![](Letterboxd_Analysis_files/figure-html/fig-figure9-1.png){width=100%}
 </div>
+
+On the figure are shown top 10 of all studious by a number of films. And there we can see a negative trend of mean ratings throughout the years. 

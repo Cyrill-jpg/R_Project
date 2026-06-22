@@ -1,6 +1,6 @@
 ---
 title: "Letterboxd analysis"
-author: Kyrylo Radchenko
+author: "Kyrylo Radchenko"
 format:
   html: 
     warning: false
@@ -185,8 +185,7 @@ ggplot() + geom_line(data = only_digital_releases,
     color = "Type of release"
   ) +
   scale_x_continuous(breaks = seq(2008, 2024, by = 2)) +
-  geom_vline(xintercept=2013, linetype='dashed', color='blue') +
-  theme() 
+  geom_vline(xintercept=2013, linetype='dashed', color='blue')
 ```
 
 The next part of the analysis focuses on genre popularity in different circumstances. @fig-figure5 shows popularity of genres in all films, digital and theatrical. It can be determined that top 4 genres are Drama, Comedy, Action and Thriller. @fig-figure6 shows genre popularity in digital only movies. As can be seen, top 3 is the same, but forth place is taken by a Music.
@@ -381,10 +380,10 @@ for (i in c("R_0.5","R_1","R_1.5","R_2","R_2.5","R_3","R_3.5","R_4","R_4.5","R_5
 wrap_plots(plots, ncol = 3)
 ```
 
-## Conclusion
+## Conclusions
 
 With this project we analysed the films and users' behaviour on the Letterboxd. 
-In @fig-figure1 we determined positive linear trend in length of films while @fig-figure2 showed number of films by length.  
+In @fig-figure1 we determined positive linear trend in length of films while @fig-figure2 showed number of films by length and with that we determined the most popular range of length.  
 @fig-figure3 showed number of films by year and found a correlation with start of COVID and fall in the number of film released.
 @fig-figure4 showed growth of digital only films and decline of theatrical only releases.
 @fig-figure5 and @fig-figure6 showed popularity of genres across years.

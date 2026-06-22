@@ -4,4 +4,4 @@
 
 [**Presentation**](https://cyrill-jpg.github.io/R_Project/Quarto/Letterboxd_Analysis_Presentation)
 
-[**Dashboard**](https://cyrill-jpg.github.io/R_Project/Quarto/Dashboard)
+[**Dashboard**](https://cyrill-jpg.github.io/R_Project/Quarto/Letterboxd_Analysis_Dashboard)
